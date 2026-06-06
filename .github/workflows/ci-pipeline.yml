@@ -7,16 +7,21 @@ on:
 jobs:
   build-and-ship:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write  # Gives the runner explicit permission to upload images here
 
     steps:
     - name: Checkout Repository Code
       uses: actions/checkout@v4
 
-    - name: Authenticate to Docker Hub
+    # Log into GitHub's own Container Registry automatically using the built-in system token
+    - name: Authenticate to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: ghcr.io
+        username: ${{ github.actor }}  # Automatically grabs your GitHub username (Itznikhil028)
+        password: ${{ secrets.GITHUB_TOKEN }}  # Automatically generated system password
 
     - name: Build and Push Production Docker Image
       uses: docker/build-push-action@v5
@@ -24,4 +29,5 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/github-actions-ci-pipeline:latest
+        # Converts your username to lowercase automatically to prevent registry errors
+        tags: ghcr.io/itznikhil028/github-actions-ci-pipeline:latest
